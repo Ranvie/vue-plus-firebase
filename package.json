@@ -10,7 +10,9 @@
   "dependencies": {
     "core-js": "^3.8.3",
     "firebase": "^9.19.1",
-    "vue": "^3.2.13"
+    "firebase-admin": "^11.6.0",
+    "vue": "^3.2.13",
+    "vue-router": "^4.1.6"
   },
   "devDependencies": {
     "@babel/core": "^7.12.16",

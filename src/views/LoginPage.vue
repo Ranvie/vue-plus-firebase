@@ -25,6 +25,7 @@
 import CustomInput from '@/components/CustomInput.vue'
 import { signInWithEmailAndPassword } from 'firebase/auth'
 import { auth } from '@/firebaseConfig'
+import router from '@/router'
 
 export default {
   data()
@@ -47,9 +48,8 @@ export default {
     tryToLogin(email, password)
     {
       signInWithEmailAndPassword(auth, email, password)
-      .then((credentials) => {
-        console.log(credentials);
-        alert("Logado com sucesso");
+      .then(() => {
+        router.push({ name: "Home" });
       })
       .catch((err) => {
         if(err.code == "auth/user-not-found" || err.code == "auth/wrong-password")
