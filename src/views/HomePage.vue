@@ -4,13 +4,13 @@
   </header>
   <main>
     <div class="container">
-      <form id="createEntry" v-if="isAdmin"> <!-- Check if the user connected is the admin -->
+      <form id="createEntry" v-if="isAdmin" @submit.prevent="handleSubmit">
         <table>
           <tr>
-            <td><input type="text" placeholder="Name"></td>
-            <td><input type="text" placeholder="Description"></td>
-            <td><input type="number" placeholder="Price"></td>
-            <td><input type="number" placeholder="Stock"></td>
+            <td><input type="text" placeholder="Name" name="name"></td>
+            <td><input type="text" placeholder="Description" name="description"></td>
+            <td><input type="number" placeholder="Price" name="price" min="0" step=".01"></td>
+            <td><input type="number" placeholder="Stock" name="stock" min="0"></td>
           </tr>
         </table>
         <button type="submit">Save</button>
@@ -25,7 +25,7 @@
         <tr v-for="(product, i) in products" :key="i">
           <td>{{product.name}}</td>
           <td>{{product.description}}</td>
-          <td>{{product.price}}</td>
+          <td>${{Number.parseFloat(product.price).toFixed(2).toString()}}</td>
           <td>{{product.stock}}</td>
         </tr>
       </table>
@@ -37,31 +37,79 @@
 </template>
 
 <script>
-import { auth } from '@/firebaseConfig';
+import { auth, db } from '@/firebaseConfig';
+import router from '@/router';
+import { getDocs, collection, setDoc, doc } from 'firebase/firestore';
 
 export default {
   data(){
     return {
-      products: [
-        {name: 'Apple', description: 'Apple', price: '$0.23', stock: '6'},
-        {name: 'Pineapple', description: 'Pineapple', price: '$0.72', stock: '3'}
-      ],
+      products: [],
       isAdmin: false
     }
   },
   mounted(){
     this.isUserAdmin();
+    this.getProducts();
   },
   methods: {
     async isUserAdmin()
     {
       auth.onAuthStateChanged((user) => {
-        if(auth.currentUser === undefined) { return false; }
+        if(auth.currentUser === null) { this.isAdmin = false; return; }
 
         user.getIdTokenResult(true).then((idTokenResult) => {
           this.isAdmin = idTokenResult.claims.admin === true; 
         })
       })
+    },
+    handleSubmit(submitEvent)
+    {
+      if(!this.isAdmin)
+      {
+        router.push({ name: "Login" });
+      }
+      else
+      {
+        let product = this.convertSubmitToProduct(submitEvent); //TODO: verify if any input is blank;
+        this.saveProduct(product);
+      }
+    },
+    getProducts()
+    {
+      let auxProds = [];
+
+      getDocs(collection(db, "products")).then((prodDocs) => {
+        prodDocs.forEach(prodDoc => {
+          auxProds.push(prodDoc.data());
+        })
+
+        this.products = auxProds;
+      })
+    },
+    convertSubmitToProduct(submitEvent)
+    {
+      let product = {};
+
+      for(let data of submitEvent.target)
+      {
+        if(data.localName !== 'input') { continue; }
+
+        product[data.name] = data.value;
+      }
+
+      return product;
+    },
+    saveProduct(product)
+    {
+      setDoc(doc(db, "products", product.name), {
+        name: product.name,
+        description: product.description,
+        price: product.price,
+        stock: product.stock
+      }).then(() => {
+        this.getProducts();
+      });
     }
   }
 }
@@ -113,6 +161,10 @@ export default {
     background-color: rgb(35, 195, 35);
     border: 0;
     border-radius: 20px;
+  }
+
+  #createEntry button:hover{
+    cursor: pointer;
   }
 
   .container{
