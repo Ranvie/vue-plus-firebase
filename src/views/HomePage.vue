@@ -100,7 +100,7 @@ export default {
         })
 
         this.products = auxProds;
-        customLocalStorage.setItem('products', JSON.stringify(this.products), '1D');
+        customLocalStorage.setItem('products', JSON.stringify(this.products), '1h');
       })
     },
     convertSubmitToProduct(submitEvent)
