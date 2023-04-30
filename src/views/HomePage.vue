@@ -15,6 +15,8 @@
         </table>
         <button type="submit">Save</button>
       </form>
+      <div class="marginTop30"></div>
+      <button class="reloadButton"><img src="@/assets/Reload.svg" title="Reload products" alt="Reload all products from table" @click="getProducts(true)"/></button>
       <table id="showProducts">
         <tr>
           <th>Name</th>
@@ -40,6 +42,7 @@
 import { auth, db } from '@/firebaseConfig';
 import router from '@/router';
 import { getDocs, collection, setDoc, doc } from 'firebase/firestore';
+import customLocalStorage from '@/model/CustomLocalStorage'
 
 export default {
   data(){
@@ -75,8 +78,20 @@ export default {
         this.saveProduct(product);
       }
     },
-    getProducts()
+    getProducts(forceUpdate = false)
     {
+      if(!forceUpdate && customLocalStorage.getItem('products') && !customLocalStorage.isExpired('products')){
+        this.readFromLocalStorage();
+      }
+      else{
+        this.readFromDatabase();
+        console.log("A");
+      }
+    },
+    readFromLocalStorage(){
+      this.products = JSON.parse(customLocalStorage.getKey('products', 'value'));
+    },
+    readFromDatabase(){
       let auxProds = [];
 
       getDocs(collection(db, "products")).then((prodDocs) => {
@@ -85,6 +100,7 @@ export default {
         })
 
         this.products = auxProds;
+        customLocalStorage.setItem('products', JSON.stringify(this.products), '1D');
       })
     },
     convertSubmitToProduct(submitEvent)
@@ -126,7 +142,6 @@ export default {
   table#showProducts{
     border: 1px solid black;
     border-spacing: 0;
-    margin-top: 30px;
     margin-left: 50%;
     transform: translateX(-50%);
   }
@@ -170,5 +185,28 @@ export default {
   .container{
     width: 70%;
     margin: auto;
+  }
+
+  .reloadButton{
+    margin-left: 50%;
+    height: 25px;
+    width: 25px;
+    background: none;
+    border: none;
+  }
+
+  .reloadButton:hover{
+    cursor: pointer;
+    filter: invert(100%);
+  }
+
+  .reloadButton img{
+    height: inherit;
+    width: inherit;
+    color: black;
+  }
+
+  .marginTop30{
+    margin-top: 30px;
   }
 </style>
