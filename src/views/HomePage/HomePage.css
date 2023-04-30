@@ -1,0 +1,77 @@
+header a{
+  color: var(--light-blue);
+  font-size: 25px;
+  font-weight: 900;
+  margin-left: 90%;
+}
+
+table#showProducts{
+  border: 1px solid black;
+  border-spacing: 0;
+  margin-left: 50%;
+  transform: translateX(-50%);
+}
+
+table#showProducts th{
+  border-bottom: 1px solid black;
+  border-right: 1px solid black;
+}
+
+table#showProducts th:last-child{
+  border-right: none;
+}
+
+table#showProducts th, table#showProducts td{
+  text-align: center;
+  padding: 10px 30px;
+}
+
+#createEntry table{
+  margin-left: 50%;
+  transform: translateX(-50%);
+  padding: 20px;
+}
+
+#createEntry button{
+  margin-left: 80%;
+  transform: translateX(-80%);
+  padding: 5px 20px;
+  color: white;
+  text-shadow: 0.5px 0.5px 0.5px black;
+  font-weight: 900;
+  background-color: rgb(35, 195, 35);
+  border: 0;
+  border-radius: 20px;
+}
+
+#createEntry button:hover{
+  cursor: pointer;
+}
+
+.container{
+  width: 70%;
+  margin: auto;
+}
+
+.reloadButton{
+  margin-left: 50%;
+  height: 25px;
+  width: 25px;
+  background: none;
+  border: none;
+}
+
+.reloadButton:hover{
+  cursor: pointer;
+  filter: invert(100%);
+}
+
+.reloadButton img{
+  height: inherit;
+  width: inherit;
+  color: black;
+}
+
+.marginTop30{
+  margin-top: 30px;
+}
