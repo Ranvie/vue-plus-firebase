@@ -17,6 +17,16 @@ table#showProducts th{
   border-right: 1px solid black;
 }
 
+table#showProducts th:hover{
+  cursor: pointer;
+  background-color: var(--light-blue);
+  color: white;
+}
+
+table#showProducts th:focus{
+  outline-color: var(--light-blue);
+}
+
 table#showProducts th:last-child{
   border-right: none;
 }
