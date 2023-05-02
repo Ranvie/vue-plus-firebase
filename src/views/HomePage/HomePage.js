@@ -1,14 +1,13 @@
 import { auth, db } from '@/firebaseConfig';
 import router from '@/router';
-import { getDocs, query, orderBy, setDoc, doc, collection } from 'firebase/firestore';
-import customLocalStorage from '@/model/CustomLocalStorage'
-import checkTypes from '@/model/CheckTypes'
+import databaseStorage from '@/model/DatabaseStorage';
 
 export default {
   data(){
     return {
       products: [],
-      isAdmin: false
+      isAdmin: false,
+      lastVisible: {}
     }
   },
   mounted(){
@@ -35,7 +34,9 @@ export default {
       else
       {
         let product = this.convertSubmitToProduct(submitEvent); //TODO: verify if any input is blank;
-        this.saveProduct(product);
+        databaseStorage.saveToDatabase(db, 'products', product.name, product).then(() => {
+          this.getProducts(true);
+        });
       }
     },
     convertSubmitToProduct(submitEvent)
@@ -51,65 +52,16 @@ export default {
 
       return product;
     },
-    saveProduct(product)
+    async getProducts(forceUpdate = false, orderBy = 'name')
     {
-      setDoc(doc(db, "products", product.name), {
-        name: product.name,
-        description: product.description,
-        price: product.price,
-        stock: product.stock
-      }).then(() => {
-        this.getProducts(true);
-      });
-    },
-    getProducts(forceUpdate = false, orderBy = 'name')
-    {
-      if(!forceUpdate && customLocalStorage.getItem('products') && !customLocalStorage.isExpired('products')){
-        this.readFromLocalStorage(orderBy);
+      if(!forceUpdate && databaseStorage.isDataExistsAndNotExpiredLocal('products')){
+        this.products = databaseStorage.readFromLocalStorage('products', orderBy);
       }
       else{
-        this.readFromDatabase(orderBy);
+        databaseStorage.readFromDatabase(db, 'products', orderBy, 10).then((found) => {
+          this.products = found;
+        });
       }
-    },
-    readFromLocalStorage(orderBy = 'name'){
-      this.products = this.orderLocalStorage(orderBy);
-    },
-    orderLocalStorage(orderBy){
-      let sorted = JSON.parse(customLocalStorage.getKey('products', 'value'));
-
-      sorted.sort((a, b) => {
-        if(this.isNumber(a[orderBy])) {
-          return this.evaluateHigher(Number.parseFloat(a[orderBy]), Number.parseFloat(b[orderBy]));
-        }
-
-        return a[orderBy].localeCompare(b[orderBy], 'sv');
-      });
-
-      console.log(sorted);
-
-      return sorted;
-    },
-    isNumber(value){
-      return checkTypes.possibleTypes(value).includes('INT') ||
-        checkTypes.possibleTypes(value).includes('FLOAT');
-    },
-    evaluateHigher(a, b){
-      if(a > b) {return 1;}
-      if(a < b) {return -1;}
-
-      return 0;
-    },
-    readFromDatabase(orderByKey = 'name'){
-      let auxProds = [];
-
-      getDocs(query(collection(db, 'products'), orderBy(orderByKey))).then((prodDocs) => {
-        prodDocs.forEach(prodDoc => {
-          auxProds.push(prodDoc.data());
-        })
-
-        this.products = auxProds;
-        customLocalStorage.setItem('products', JSON.stringify(this.products), '1h');
-      })
     }
   }
 }
