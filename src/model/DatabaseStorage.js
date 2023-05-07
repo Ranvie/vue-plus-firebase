@@ -22,6 +22,10 @@ class DatabaseStorage
     })
   }
 
+  saveToLocalStorage(key, obj, expire){
+    customLocalStorage.setItem(key, obj, expire);
+  }
+
   deleteFromDatabase(database, collectionName, id)
   {
     return new Promise((resolve, reject) => {

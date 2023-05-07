@@ -2,7 +2,9 @@ import checkTypes from "@/model/CheckTypes"
 
 class SortList
 {
-  sort(list, orderBy){
+  sort(list, orderBy = ''){
+    if(orderBy === '') {return list;}
+
     let sorted = list;
 
     sorted.sort((a, b) => {
