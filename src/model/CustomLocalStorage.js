@@ -1,3 +1,5 @@
+import objectUtils from "./ObjectUtils";
+
 class CustomLocalStorage
 {
   constructor(){
@@ -8,8 +10,10 @@ class CustomLocalStorage
     return localStorage.getItem(key);
   }
 
-  getKey(key, name){
-    return JSON.parse(localStorage.getItem(key))[name];
+  getKey(key, keyPath){
+    let data = JSON.parse(localStorage.getItem(key));
+
+    return objectUtils.getKeyValue(data, keyPath);
   }
 
   removeItem(key){
@@ -23,13 +27,13 @@ class CustomLocalStorage
     return now > expireDate;
   }
 
-  setItem(key, value, expire){
-    localStorage.setItem(key, JSON.stringify({ value: value, expire: this.expireDate(expire) }));
+  setItem(key, obj, expire = ''){
+    localStorage.setItem(key, JSON.stringify({ value: obj, expire: this.expireDate(expire) }));
   }
 
   expireDate(expire){
     expire = expire.split(/(\D+|\d+)/g).filter(value => value != '');
-    
+
     return this.parseToDateFromNow(expire[0], expire[1]).toLocaleString('sv');
   }
 
@@ -40,10 +44,10 @@ class CustomLocalStorage
     switch(modifier){
       case 's': date.setSeconds(date.getSeconds() + unit);   break;
       case 'm': date.setMinutes(date.getMinutes() + unit);   break;
-      case 'h': date.setHours(date.setHours() + unit);       break;
+      case 'h': date.setHours(date.getHours() + unit);       break;
       case 'D': date.setHours(date.getHours() + unit*24);    break;
       case 'M': date.setMonth(date.getMonth() + unit);       break;
-      case 'Y': date.getFullYear(date.setFullYear() + unit); break;
+      case 'Y': date.setFullYear(date.getFullYear() + unit); break;
     }
 
     return date;

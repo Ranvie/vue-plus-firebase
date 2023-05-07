@@ -13,7 +13,7 @@
             <td><input type="number" placeholder="Stock" name="stock" min="0" tabindex="2"></td>
           </tr>
         </table>
-        <button type="submit" tabindex="2">Save</button>
+        <button class="saveButton" type="submit" tabindex="2">Save</button>
       </form>
       <div class="marginTop30"></div>
       <button class="reloadButton"><img src="@/assets/svg/Reload.svg" title="Reload products" alt="Reload all products from table" @click="getProducts(true)" tabindex="2"/></button>

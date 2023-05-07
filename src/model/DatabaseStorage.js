@@ -1,6 +1,6 @@
 import customLocalStorage from "@/model/CustomLocalStorage"
-import checkTypes from "@/model/CheckTypes"
-import { getDocs, query, orderBy, startAfter, limit, setDoc, doc, collection } from 'firebase/firestore'
+import sortList from "@/model/SortList"
+import { getDocs, query, orderBy, startAfter, startAt, limit, setDoc, doc, collection, deleteDoc } from 'firebase/firestore'
 
 class DatabaseStorage
 {
@@ -22,28 +22,31 @@ class DatabaseStorage
     })
   }
 
-  readFromDatabase(database, collectionName, orderByKey = '', limitDoc = 10, cache = true, expire = '1h'){
+  deleteFromDatabase(database, collectionName, id)
+  {
+    return new Promise((resolve, reject) => {
+      deleteDoc(doc(database, collectionName, id)).then(() => {
+        resolve();
+      }).catch((err) => {
+        reject(err);
+      })
+    });
+  }
+
+  deleteFromLocalStorage(key){
+    localStorage.removeItem(key);
+  }
+
+  readFromDatabase(database, collectionName, orderByKey = '', limitDoc = 10, queryCursor = '', startFrom = ''){
     return new Promise((resolve, reject) => {
       let objs = [];
-
-      const colec = collection(database, collectionName);
-      let queryConfig;
-
-      if(orderByKey != '')
-      {
-        queryConfig = query(colec, orderBy(orderByKey), startAfter(5), limit(limitDoc));
-      }
-      else
-      {
-        queryConfig = query(colec, startAfter(5), limit(limitDoc));
-      }
+      const queryConfig = this.createQueryString(database, collectionName, orderByKey, limitDoc, queryCursor, startFrom);
 
       getDocs(queryConfig).then((prodDocs) => {
         prodDocs.forEach(prodDoc => {
           objs.push(prodDoc.data());
         })
 
-        if(cache) { customLocalStorage.setItem('products', JSON.stringify(objs), expire); }
         resolve(objs);
       }).catch((err) => {
         reject(err);
@@ -51,35 +54,44 @@ class DatabaseStorage
     });
   }
 
-  readFromLocalStorage(key, orderBy = ''){
-    return orderBy != '' ? this.orderLocalStorage(key, orderBy) : 
-      JSON.parse(customLocalStorage.getKey(key, 'value'));
+  createQueryString(database, collectionName, orderByKey = '', limitDoc = 10, queryCursor = '', startFrom)
+  {
+    const collec = collection(database, collectionName);
+
+    if(orderByKey != '' && queryCursor != '' && startFrom == 'AFTER') { return query(collec, orderBy(orderByKey), startAfter(queryCursor), limit(limitDoc)); }
+    if(orderByKey != '' && queryCursor != '' && startFrom == 'AT')    { return query(collec, orderBy(orderByKey), startAt(queryCursor), limit(limitDoc)); }
+    if(orderByKey != '' && queryCursor == '') { return query(collec, orderBy(orderByKey), limit(limitDoc)); }
+    
+    return query(collec, limit(limitDoc));
   }
 
-  orderLocalStorage(key, orderBy){
-    let sorted = JSON.parse(customLocalStorage.getKey(key, 'value'));
-
-    sorted.sort((a, b) => {
-      if(this.isNumber(a[orderBy])) {
-        return this.evaluateHigher(Number.parseFloat(a[orderBy]), Number.parseFloat(b[orderBy]));
-      }
-
-      return a[orderBy].localeCompare(b[orderBy], 'sv');
+  readFromDatabaseCaching(database, collectionName, orderByKey = '', limitDoc = 10, queryCursor = '', startFrom = '', key, expire = '')
+  {
+    return new Promise((resolve, reject) => {
+      this.readFromDatabase(database, collectionName, orderByKey, limitDoc, queryCursor, startFrom).then((found) => {
+        customLocalStorage.setItem(key, found, expire);
+        resolve(found);
+      }).catch((err) => {
+        reject(err);
+      })
     });
+  }
+
+  readFromLocalStorage(key, orderBy = '', valuePath = 'value'){
+    return orderBy != '' ? this.orderLocalStorage(key, orderBy, valuePath) : 
+      JSON.parse(customLocalStorage.getKey(key, valuePath));
+  }
+
+  orderLocalStorage(key, orderBy, valuePath = 'value'){
+    let data = customLocalStorage.getKey(key, valuePath);
+
+    if(typeof(data) === 'string'){
+      data = JSON.parse(data);
+    }
+
+    let sorted = sortList.sort(data, orderBy);
 
     return sorted;
-  }
-
-  isNumber(value){
-    return checkTypes.possibleTypes(value).includes('INT') ||
-      checkTypes.possibleTypes(value).includes('FLOAT');
-  }
-
-  evaluateHigher(a, b){
-    if(a > b) {return 1;}
-    if(a < b) {return -1;}
-
-    return 0;
   }
 }
 

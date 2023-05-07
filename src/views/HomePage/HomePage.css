@@ -44,14 +44,22 @@ table#showProducts th, table#showProducts td{
 
 #createEntry button{
   margin-left: 80%;
+  margin-bottom: 10px;
   transform: translateX(-80%);
   padding: 5px 20px;
   color: white;
   text-shadow: 0.5px 0.5px 0.5px black;
   font-weight: 900;
-  background-color: rgb(35, 195, 35);
   border: 0;
   border-radius: 20px;
+}
+
+#createEntry button:hover{
+  background-color: var(--light-blue) !important;
+}
+
+#createEntry button.saveButton{
+  background-color: rgb(35, 195, 35);
 }
 
 #createEntry button:hover{

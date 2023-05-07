@@ -1,6 +1,7 @@
 import { auth, db } from '@/firebaseConfig';
 import router from '@/router';
 import databaseStorage from '@/model/DatabaseStorage';
+import convertProducts from '@/model/ConvertProducts';
 
 export default {
   data(){
@@ -33,10 +34,10 @@ export default {
       }
       else
       {
+        /* eslint-disable */
         let product = this.convertSubmitToProduct(submitEvent); //TODO: verify if any input is blank;
-        databaseStorage.saveToDatabase(db, 'products', product.name, product).then(() => {
-          this.getProducts(true);
-        });
+      
+        //TODO: update the file that is on the firebase setting the new value into the products list;
       }
     },
     convertSubmitToProduct(submitEvent)
@@ -55,11 +56,11 @@ export default {
     async getProducts(forceUpdate = false, orderBy = 'name')
     {
       if(!forceUpdate && databaseStorage.isDataExistsAndNotExpiredLocal('products')){
-        this.products = databaseStorage.readFromLocalStorage('products', orderBy);
+        this.products = databaseStorage.readFromLocalStorage('products', orderBy, 'value[0].products');
       }
       else{
-        databaseStorage.readFromDatabase(db, 'products', orderBy, 10).then((found) => {
-          this.products = found;
+        databaseStorage.readFromDatabaseCaching(db, 'products', 'id', 1, 'products_0', 'AT', 'products', '1h').then((cached) => {
+          this.products = convertProducts.getProductList(cached, orderBy);
         });
       }
     }
