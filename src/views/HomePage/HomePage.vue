@@ -31,6 +31,7 @@
           <td>{{product.stock}}</td>
         </tr>
       </table>
+      <VuePageify pageSize="10" :listSize="this.productCount" @updateOffset="handleUpdateOffset"/>
     </div>
   </main>
   <footer>

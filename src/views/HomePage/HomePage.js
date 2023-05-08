@@ -1,8 +1,11 @@
+import VuePageify from '@/components/VuePageify/VuePageify.vue'
+
 import { auth, db } from '@/firebaseConfig';
 import router from '@/router';
 import databaseStorage from '@/model/DatabaseStorage';
 import convertProducts from '@/model/ConvertProducts';
 import sortList from '@/model/SortList';
+import paginate from '@/model/Paginate';
 
 export default 
 {
@@ -10,9 +13,15 @@ export default
   {
     return {
       products: [],
+      productCount: 0,
+      offset: 0,
+      limit: 10,
       isAdmin: false,
       lastVisible: {}
     }
+  },
+  components: {
+    VuePageify
   },
   mounted()
   {
@@ -49,6 +58,7 @@ export default
           aux = this.newProductList(this.products, product, 'name', 'name');
           saveToDb = { id: 'products_0', count: aux.length.toString(), products: JSON.stringify(aux) };
           this.products = aux;
+          this.productCount = aux.length;
           
           databaseStorage.saveToDatabase(db, 'products', 'products', saveToDb) //TODO: make a logic to enable saving to other products than products_0;
           databaseStorage.saveToLocalStorage('products', [saveToDb], '1h');
@@ -91,18 +101,32 @@ export default
 
       return product;
     },
+    handleUpdateOffset(offset){
+      this.offset = offset;
+
+      this.getProducts(false, 'name', this.offset, this.limit);
+    },
     getProducts(forceUpdate = false, orderBy = 'name')
     {
-      return new Promise((resolve) => {
+      let aux;
+
+      return new Promise((resolve) => { //TODO: The sorting must be done on the sublist not on the total list;
         if(!forceUpdate && databaseStorage.isDataExistsAndNotExpiredLocal('products'))
         {
-          this.products = databaseStorage.readFromLocalStorage('products', orderBy, 'value[0].products')
+          let aux = databaseStorage.readFromLocalStorage('products', '', 'value[0].products');
+
+          this.products = sortList.sort(paginate.createSublist(aux, this.offset, this.limit), orderBy);
+          this.productCount = aux.length;
           resolve();
         }
         else
         {
-          databaseStorage.readFromDatabaseCaching(db, 'products', 'id', 1, 'products_0', 'AT', 'products', '1h').then((cached) => {
-            this.products = convertProducts.getProductList(cached, orderBy)
+          databaseStorage.readFromDatabaseCaching(db, 'products', 'id', 1, 'products_0', 'AT', 'products', '1h')
+          .then((cached) => {
+            aux = convertProducts.getProductList(cached, '');
+
+            this.products = sortList.sort(paginate.createSublist(aux, this.offset, this.limit), orderBy);
+            this.productCount = aux.length;
             resolve();
           });
         }
