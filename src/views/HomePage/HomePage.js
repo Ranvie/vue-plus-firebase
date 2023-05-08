@@ -7,6 +7,12 @@ import convertProducts from '@/model/ConvertProducts';
 import sortList from '@/model/SortList';
 import paginate from '@/model/Paginate';
 
+/* 
+  TODO: Evaluate if is better to keep the table calling getProducts or separate it to another function.
+  When making a filter based on a atribute, the productList found will be overwrited as soon the user clicks the
+  table header to sort.
+*/
+
 export default 
 {
   data()
@@ -45,6 +51,7 @@ export default
       let product;
       let aux;
       let saveToDb;
+      let allProducts;
 
       if(!this.isAdmin)
       {
@@ -53,11 +60,13 @@ export default
       else
       {
         product = this.convertSubmitToProduct(submitEvent); //TODO: verify if any input is blank;
-
+        
         this.getProducts(true, '').then(() => {
-          aux = this.newProductList(this.products, product, 'name', 'name');
+          allProducts = databaseStorage.readFromLocalStorage('products', '', 'value[0].products');
+
+          aux = this.newProductList(allProducts, product, 'name', 'name');
           saveToDb = { id: 'products_0', count: aux.length.toString(), products: JSON.stringify(aux) };
-          this.products = aux;
+          this.products = paginate.createSublist(aux, this.offset, this.limit);
           this.productCount = aux.length;
           
           databaseStorage.saveToDatabase(db, 'products', 'products', saveToDb) //TODO: make a logic to enable saving to other products than products_0;
@@ -110,7 +119,7 @@ export default
     {
       let aux;
 
-      return new Promise((resolve) => { //TODO: The sorting must be done on the sublist not on the total list;
+      return new Promise((resolve) => {
         if(!forceUpdate && databaseStorage.isDataExistsAndNotExpiredLocal('products'))
         {
           let aux = databaseStorage.readFromLocalStorage('products', '', 'value[0].products');
