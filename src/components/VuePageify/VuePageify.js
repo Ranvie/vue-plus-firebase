@@ -20,7 +20,7 @@ export default {
     createEmptyList(){
       if(this.pageSize <= 0 || this.listSize <= 0) { return new Array(1); }
       
-      let size = Math.floor(this.listSize/this.pageSize);
+      let size = Math.ceil(this.listSize/this.pageSize);
 
       return new Array(size);
     }
